@@ -61,7 +61,7 @@ document.getElementById("gerar-relatorio").addEventListener("click", () => {
 
     doc.setFontSize(12);
     doc.text(
-        "Este relatório contém informações detalhadas sobre o desempenho semanal dos membros da staff, incluindo status de promoção.",
+        "Este relatório contém informações detalhadas sobre o desempenho semanal dos membros da staff.",
         10,
         30
     );
