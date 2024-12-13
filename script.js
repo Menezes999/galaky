@@ -55,58 +55,101 @@ document.getElementById("gerar-relatorio").addEventListener("click", () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
+    // Configurações gerais
+    const pageWidth = 190;
+    const startX = 10;
+    let startY = 20;
+    const lineHeight = 10;
+
     // Cabeçalho do PDF
     doc.setFontSize(16);
-    doc.text("Relatório Semanal de Staff", 105, 20, null, null, "center");
+    doc.setFont("helvetica", "bold");
+    doc.text("Relatório Semanal de Staff", pageWidth / 2, startY, null, null, "center");
+    startY += lineHeight;
 
     doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
     doc.text(
-        "Este relatório contém informações detalhadas sobre o desempenho semanal dos membros da staff.",
-        10,
-        30
+        "Este relatório apresenta informações detalhadas sobre o desempenho semanal dos membros da staff, incluindo\nstatus de promoção, pontos acumulados e metas atingidas.",
+        startX,
+        startY
     );
+    startY += lineHeight * 2;
+
+    // Legenda de status
+    doc.setFontSize(10);
+    doc.setFillColor(230, 230, 230);
+    doc.rect(startX, startY, pageWidth, lineHeight, "F");
+    doc.text("Legenda: Promovido = Atingiu a meta; Não Promovido = Meta não atingida.", startX + 5, startY + 7);
+    startY += lineHeight + 5;
 
     // Cabeçalho da Tabela
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.setTextColor(255, 255, 255);
     doc.setFillColor(50, 50, 200);
-    doc.rect(10, 40, 190, 10, "F");
-    doc.text("Nome", 15, 46);
-    doc.text("Cargo Atual", 60, 46);
-    doc.text("Meta de Pontos", 110, 46);
-    doc.text("Pontos Acumulados", 150, 46);
-    doc.text("Status", 180, 46);
+    doc.rect(startX, startY, pageWidth, lineHeight, "F");
+    doc.text("Nome", startX + 5, startY + 7);
+    doc.text("Cargo", startX + 50, startY + 7);
+    doc.text("Meta", startX + 90, startY + 7);
+    doc.text("Pontos", startX + 120, startY + 7);
+    doc.text("Status", startX + 160, startY + 7);
+    startY += lineHeight;
 
     // Dados da Tabela
-    let y = 56;
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0);
 
     membros.forEach((membro, index) => {
         const status = membro.pontos >= membro.meta ? "Promovido" : "Não Promovido";
-        doc.text(membro.nome, 15, y);
-        doc.text(membro.cargo, 60, y);
-        doc.text(membro.meta.toString(), 115, y, null, null, "right");
-        doc.text(membro.pontos.toString(), 155, y, null, null, "right");
-        doc.text(status, 180, y, null, null, "right");
+        const rowColor = index % 2 === 0 ? [240, 240, 240] : [255, 255, 255];
 
-        // Adicionar linhas separadoras
-        doc.setDrawColor(200, 200, 200);
-        doc.line(10, y + 2, 200, y + 2);
+        // Fundo alternado
+        doc.setFillColor(...rowColor);
+        doc.rect(startX, startY, pageWidth, lineHeight, "F");
 
-        y += 10;
+        // Dados do membro
+        doc.text(membro.nome, startX + 5, startY + 7);
+        doc.text(membro.cargo, startX + 50, startY + 7);
+        doc.text(`${membro.meta}`, startX + 90, startY + 7);
+        doc.text(`${membro.pontos}`, startX + 120, startY + 7);
+        doc.text(status, startX + 160, startY + 7);
 
-        // Adicionar nova página se necessário
-        if (y > 270) {
+        // Próxima linha
+        startY += lineHeight;
+
+        // Verificar se precisa de nova página
+        if (startY > 270) {
             doc.addPage();
-            y = 20;
+            startY = 20;
+
+            // Repetir cabeçalho da tabela na nova página
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(255, 255, 255);
+            doc.setFillColor(50, 50, 200);
+            doc.rect(startX, startY, pageWidth, lineHeight, "F");
+            doc.text("Nome", startX + 5, startY + 7);
+            doc.text("Cargo", startX + 50, startY + 7);
+            doc.text("Meta", startX + 90, startY + 7);
+            doc.text("Pontos", startX + 120, startY + 7);
+            doc.text("Status", startX + 160, startY + 7);
+            startY += lineHeight;
         }
     });
 
     // Rodapé
-    doc.setFontSize(10);
-    doc.text(`Relatório gerado em: ${new Date().toLocaleDateString()}`, 10, 290);
-    doc.text("Assinatura do responsável: ____________________________", 105, 290, null, null, "center");
+    const currentDate = new Date().toLocaleDateString();
+    const totalPages = doc.internal.getNumberOfPages();
+
+    for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(10);
+        doc.text(`Página ${i} de ${totalPages}`, pageWidth - 40, 290);
+        doc.text(`Data: ${currentDate}`, startX, 290);
+        doc.text("Assinatura do responsável: ____________________________", pageWidth / 2, 290, null, null, "center");
+    }
 
     // Salvar o PDF
     doc.save("relatorio_semanal.pdf");
