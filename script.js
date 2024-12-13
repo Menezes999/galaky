@@ -50,18 +50,38 @@ document.getElementById("form-pontos").addEventListener("submit", (event) => {
     }
 });
 
-// Gerar Relatório
+// Gerar Relatório em PDF
 document.getElementById("gerar-relatorio").addEventListener("click", () => {
-    const relatorio = membros.map((membro) => {
-        const status = membro.pontos >= membro.meta ? "Promovido" : "Não Promovido";
-        return `${membro.nome} - Cargo: ${membro.cargo} - Pontos: ${membro.pontos} - Status: ${status}`;
-    }).join("\n");
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
 
-    const blob = new Blob([relatorio], { type: "text/plain;charset=utf-8" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "relatorio_semanal.txt";
-    link.click();
+    doc.setFontSize(16);
+    doc.text("Relatório Semanal de Staff", 105, 10, null, null, "center");
+
+    doc.setFontSize(12);
+    let y = 20;
+
+    membros.forEach((membro, index) => {
+        const status = membro.pontos >= membro.meta ? "Promovido" : "Não Promovido";
+        const novoCargo = status === "Promovido" ? "Novo Cargo" : "Sem Mudança";
+
+        doc.text(
+            `${index + 1}. Nome: ${membro.nome}`,
+            10,
+            y
+        );
+        doc.text(`Cargo: ${membro.cargo} | Meta: ${membro.meta} | Pontos: ${membro.pontos}`, 10, y + 5);
+        doc.text(`Status: ${status} | ${status === "Promovido" ? `Novo Cargo: ${novoCargo}` : ""}`, 10, y + 10);
+
+        y += 20;
+
+        if (y > 270) {
+            doc.addPage();
+            y = 10;
+        }
+    });
+
+    doc.save("relatorio_semanal.pdf");
 });
 
 // Inicializar Lista de Membros
